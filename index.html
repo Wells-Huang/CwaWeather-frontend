@@ -68,6 +68,35 @@
             transform: rotate(-2deg);
             border: 2px solid white;
             box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .location-select {
+            background: transparent;
+            border: none;
+            color: var(--ac-brown);
+            font-weight: 900;
+            font-size: 1.1rem;
+            font-family: 'Zen Maru Gothic', sans-serif;
+            outline: none;
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            padding: 0;
+            padding-right: 5px;
+        }
+
+        .location-select::-ms-expand {
+            display: none;
+        }
+
+        .location-select option {
+            background: var(--ac-cream);
+            color: var(--ac-brown);
+            font-weight: 700;
         }
 
         .update-pill {
@@ -264,7 +293,33 @@
         <p style="color: white; font-weight: bold; margin-top: 20px;">正在觀測雲的流動...</p>
     </div>
     <div class="status-bar">
-        <div class="location-pill">📍 高雄</div>
+        <div class="location-pill">
+            <span>📍</span>
+            <select id="locationSelect" class="location-select">
+                <option value="taipei">台北市</option>
+                <option value="new-taipei">新北市</option>
+                <option value="taoyuan">桃園市</option>
+                <option value="taichung">台中市</option>
+                <option value="tainan">台南市</option>
+                <option value="kaohsiung" selected>高雄市</option>
+                <option value="keelung">基隆市</option>
+                <option value="hsinchu">新竹市</option>
+                <option value="hsinchu-county">新竹縣</option>
+                <option value="miaoli">苗栗縣</option>
+                <option value="changhua">彰化縣</option>
+                <option value="nantou">南投縣</option>
+                <option value="yunlin">雲林縣</option>
+                <option value="chiayi">嘉義市</option>
+                <option value="chiayi-county">嘉義縣</option>
+                <option value="pingtung">屏東縣</option>
+                <option value="yilan">宜蘭縣</option>
+                <option value="hualien">花蓮縣</option>
+                <option value="taitung">台東縣</option>
+                <option value="penghu">澎湖縣</option>
+                <option value="kinmen">金門縣</option>
+                <option value="lienchiang">連江縣</option>
+            </select>
+        </div>
         <div id="updateTime" class="update-pill">更新中...</div>
     </div>
 
@@ -280,7 +335,8 @@
     </div>
 
     <script>
-        const API_URL = "https://cwa-backend-api.zeabur.app/api/weather/kaohsiung";
+        const API_BASE_URL = "https://myweather.zeabur.app/api/weather";
+        let currentLocation = "kaohsiung"; // 預設高雄
 
         function getWeatherIcon(weather) {
             if (!weather) return "🌤️";
@@ -392,12 +448,19 @@
             document.getElementById('updateTime').textContent = `${month}月${date}日 ${days[dayIndex]}`;
         }
 
-        async function fetchWeather() {
+        async function fetchWeather(showLoading = true) {
             try {
+                // 顯示載入畫面（僅初次載入）
+                if (showLoading) {
+                    document.getElementById('loading').style.display = 'flex';
+                    document.getElementById('mainContent').style.display = 'none';
+                }
+
                 // 1. 定義「最低等待時間」：1500 毫秒 (1.5秒)
-                const delayPromise = new Promise(resolve => setTimeout(resolve, 1500));
+                const delayPromise = new Promise(resolve => setTimeout(resolve, showLoading ? 1500 : 500));
 
                 // 2. 定義「抓取資料」的工作
+                const API_URL = `${API_BASE_URL}/${currentLocation}`;
                 const fetchPromise = fetch(API_URL).then(res => res.json());
 
                 // 3. Promise.all 會等待「兩個都完成」才會往下走
@@ -419,7 +482,21 @@
             }
         }
 
-        document.addEventListener("DOMContentLoaded", fetchWeather);
+        // 地區選擇事件監聽器
+        function handleLocationChange() {
+            const select = document.getElementById('locationSelect');
+            currentLocation = select.value;
+            fetchWeather(false); // 切換地區時使用較短的載入時間
+        }
+
+        // 頁面載入完成後執行
+        document.addEventListener("DOMContentLoaded", () => {
+            // 設定地區選擇監聽器
+            document.getElementById('locationSelect').addEventListener('change', handleLocationChange);
+
+            // 載入預設地區的天氣
+            fetchWeather(true);
+        });
     </script>
 </body>
 
